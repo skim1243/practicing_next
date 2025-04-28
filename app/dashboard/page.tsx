@@ -1,8 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { signOut } from "firebase/auth";
+import { auth } from "../../lib/firebase";
+import { useRouter } from "next/navigation";
+
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
   const [input, setInput] = useState("");
@@ -34,10 +39,25 @@ export default function DashboardPage() {
       setMessages((prev) => [...prev, { sender: "bot", text: "Error getting response." }]);
     }
   };
+  const handleLogout = async () => {
+      try {
+        await signOut(auth);
+        router.push("/login");
+      } catch (error) {
+        console.error("Logout failed:", error);
+      }
+    };
 
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-6">Welcome to the Dashboard!</h1>
+
+      <button
+          onClick={handleLogout}
+          className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
+        >
+          Log Out
+        </button>
 
       {/* Floating Chat Button */}
       <button
@@ -46,6 +66,7 @@ export default function DashboardPage() {
       >
         💬
       </button>
+      
 
       {/* Chat Popup */}
       {isOpen && (
@@ -73,6 +94,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
+          
 
           <div className="p-2 border-t flex">
             <input
