@@ -6,7 +6,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+import { auth } from "../../lib/firebase-config";
 
 export default function LoginPage() {
   const router = useRouter();

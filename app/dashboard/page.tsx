@@ -1,120 +1,32 @@
-"use client";
-
-import { useState } from "react";
-import { signOut } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+'use client';
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase-config";
+import Chatbot from "../chatbot/Chatbot";
 
-
-export default function DashboardPage() {
+export default function Dashboard() {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
-  const [input, setInput] = useState("");
+  const [user, setUser] = useState<any>(null);
 
-  const toggleChat = () => setIsOpen(!isOpen);
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) setUser(currentUser);
+      else router.push("/login");
+    });
+    return () => unsub();
+  }, []);
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-
-    const userMessage = input;
-    setMessages((prev) => [...prev, { sender: "user", text: userMessage }]);
-    setInput("");
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: userMessage }),
-      });
-
-      const data = await res.json();
-      const botMessage = data.reply;
-
-      setMessages((prev) => [...prev, { sender: "bot", text: botMessage }]);
-    } catch (error) {
-      console.error(error);
-      setMessages((prev) => [...prev, { sender: "bot", text: "Error getting response." }]);
-    }
+  const logout = () => {
+    signOut(auth);
+    router.push("/login");
   };
-  const handleLogout = async () => {
-      try {
-        await signOut(auth);
-        router.push("/login");
-      } catch (error) {
-        console.error("Logout failed:", error);
-      }
-    };
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">Welcome to the Dashboard!</h1>
-
-      <button
-          onClick={handleLogout}
-          className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
-        >
-          Log Out
-        </button>
-
-      {/* Floating Chat Button */}
-      <button
-        onClick={toggleChat}
-        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg"
-      >
-        💬
-      </button>
-      
-
-      {/* Chat Popup */}
-      {isOpen && (
-        <div className="fixed bottom-20 right-6 bg-white border rounded-2xl shadow-lg w-80 max-h-[500px] flex flex-col overflow-hidden">
-          <div className="bg-blue-500 text-white p-3 flex justify-between items-center">
-            <span>Chatbot</span>
-            <button onClick={toggleChat} className="text-white font-bold">
-              ×
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-100">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`mb-2 ${msg.sender === "user" ? "text-right" : "text-left"}`}
-              >
-                <span
-                  className={`inline-block p-2 rounded-lg ${
-                    msg.sender === "user" ? "bg-blue-200" : "bg-gray-300"
-                  }`}
-                >
-                  {msg.text}
-                </span>
-              </div>
-            ))}
-          </div>
-          
-
-          <div className="p-2 border-t flex">
-            <input
-              className="flex-1 border p-2 rounded-xl"
-              placeholder="Type a message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") sendMessage();
-              }}
-            />
-            <button
-              className="bg-blue-500 text-white px-3 py-2 rounded-xl ml-2 hover:bg-blue-600"
-              onClick={sendMessage}
-            >
-              ➤
-            </button>
-          </div>
-        </div>
-      )}
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Welcome, {user?.email}</h1>
+      <button onClick={logout} className="bg-red-500 text-white px-4 py-2 rounded">Logout</button>
+      <Chatbot />
     </div>
   );
 }
