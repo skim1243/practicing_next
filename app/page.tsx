@@ -1,79 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../lib/firebase-config";
+import type { User } from "firebase/auth";
 
-export default function LoginPage() {
+export default function Dashboard() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [user, setUser] = useState<User | null>(null);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) setUser(currentUser);
+      else router.push("/login");
+    });
+    return () => unsub();
+  }, [router]);
 
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/dashboard");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage);
-    }
+  const logout = async () => {
+    await auth.signOut();
+    router.push("/login");
   };
-
-  const handleSignup = async () => {
-    setError("");
-  
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      router.push("/account-created"); // go to confirmation page
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage);
-    }
-  };
-  
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleLogin} className="bg-white p-8 rounded shadow-md w-full max-w-sm">
-        <h2 className="text-2xl font-bold mb-6 text-center">Login or Sign Up</h2>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full mb-4 p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full mb-6 p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <div className="flex flex-col gap-3">
-          <button type="submit" className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={handleSignup}
-            className="bg-green-600 text-white py-2 rounded hover:bg-green-700"
-          >
-            Create Account
-          </button>
-        </div>
-      </form>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Welcome, {user?.email}</h1>
+      <button
+        onClick={logout}
+        className="bg-red-500 text-white px-4 py-2 rounded"
+      >
+        Logout
+      </button>
     </div>
   );
 }

@@ -1,10 +1,11 @@
-'use client';
-import { useState, useRef, useEffect } from "react";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 
 export default function Chatbot() {
   const [show, setShow] = useState(false);
   const [query, setQuery] = useState("");
-  const [messages, setMessages] = useState<{ sender: string, text: string }[]>([]);
+  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -20,10 +21,12 @@ export default function Chatbot() {
         body: JSON.stringify({ query }),
       });
       const data = await res.json();
-
       setMessages((prev) => [...prev, { sender: "bot", text: data.reply }]);
-    } catch (err) {
-      setMessages((prev) => [...prev, { sender: "bot", text: "Oops! Something went wrong." }]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: "Oops! Something went wrong." },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -39,17 +42,28 @@ export default function Chatbot() {
         <div className="w-[90vw] sm:w-96 bg-white border shadow-lg rounded-lg flex flex-col">
           <div className="flex items-center justify-between px-4 py-2 border-b">
             <h2 className="text-lg font-bold">Chatbot</h2>
-            <button onClick={() => setShow(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+            <button
+              onClick={() => setShow(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
           </div>
           <div className="flex-1 max-h-80 overflow-y-auto px-4 py-2 space-y-2">
             {messages.map((msg, idx) => (
-              <div key={idx} className={`text-sm ${msg.sender === "user" ? "text-right" : "text-left"}`}>
-                <span className={`inline-block px-3 py-2 rounded-lg ${msg.sender === "user" ? "bg-blue-100" : "bg-gray-100"}`}>
+              <div
+                key={idx}
+                className={`text-sm ${msg.sender === "user" ? "text-right" : "text-left"}`}
+              >
+                <span
+                  className={`inline-block px-3 py-2 rounded-lg ${
+                    msg.sender === "user" ? "bg-blue-100" : "bg-gray-100"
+                  }`}
+                >
                   {msg.text}
                 </span>
               </div>
             ))}
-
             {loading && (
               <div className="text-left text-sm text-gray-500">
                 <span className="inline-block px-3 py-2 rounded-lg bg-gray-100 animate-pulse">
@@ -57,7 +71,6 @@ export default function Chatbot() {
                 </span>
               </div>
             )}
-
             <div ref={chatEndRef} />
           </div>
           <div className="flex border-t px-2 py-1">
