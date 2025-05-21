@@ -17,6 +17,7 @@ const rawDocs = [
   "We offer monthly support plans that include updates, backups, security checks, and performance monitoring to keep your website running smoothly."
 ];
 
+
 export async function internalRAGQuery(query: string): Promise<string> {
   // 1. Split documents into chunks
   const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 300, chunkOverlap: 30 });
@@ -34,4 +35,5 @@ export async function internalRAGQuery(query: string): Promise<string> {
   const response = await chain.call({ query });
 
   return response.text;
+  
 }
